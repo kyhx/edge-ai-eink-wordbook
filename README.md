@@ -60,7 +60,7 @@ git clone https://github.com/kyhx/edge-ai-eink-wordbook.git
 
 ## 四、仓库结构
 
-当前处于开题阶段，代码与硬件资料将随进度逐步入库，规划如下：
+当前处于开题阶段，目录骨架已建立，各目录内的 `README.md` 说明了用途、规划结构与命名约定：
 
 ```
 paper/
@@ -69,10 +69,19 @@ paper/
 ├── docs/                  # 论文、图表、指导记录、答辩材料
 ├── firmware/              # ESP32-S3 固件（显示、音频、推理、同步）
 ├── ml/                    # 特征提取、模型训练、量化与导出脚本
-├── hardware/              # 原理图、PCB、器件选型与BOM
+├── hardware/              # 原理图、PCB、器件选型与 BOM
 ├── data/                  # 词库、标注表（原始语音不入库）
 └── tools/                 # 采集、标注、评测等辅助脚本
 ```
+
+| 目录 | 说明 |
+|---|---|
+| [docs](docs/README.md) | 论文正文、插图源文件、指导记录、开题/答辩 PPT、数据集说明 |
+| [firmware](firmware/README.md) | 主程序与组件（display / audio_in / audio_out / infer / review / net） |
+| [ml](ml/README.md) | 特征提取、训练、量化、导出，以及作为对照的基频规则法 |
+| [hardware](hardware/README.md) | 原理图、PCB、BOM、器件手册、外壳与打样测试记录 |
+| [data](data/README.md) | `vocabulary.csv`、`labels.csv`、划分清单；`raw/` 与 `processed/` 不入库 |
+| [tools](tools/README.md) | 录音、标注、数据集校验、推理耗时与串口日志脚本 |
 
 ## 五、进度安排
 
