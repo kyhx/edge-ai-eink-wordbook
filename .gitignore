@@ -1,0 +1,58 @@
+# ---------- 操作系统 / 编辑器 ----------
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp
+*~
+
+# ---------- Office / 文档临时文件 ----------
+~$*
+*.tmp
+*.bak
+~WRL*.tmp
+
+# ---------- Python / 机器学习 ----------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.ipynb_checkpoints/
+.mypy_cache/
+.pytest_cache/
+*.log
+
+# 训练产物与中间文件（体积大，不入库）
+*.h5
+*.keras
+*.onnx
+*.tflite
+*.pt
+*.pth
+checkpoints/
+runs/
+logs/
+exports/
+
+# 原始语音数据与数据集（体积大，按需通过 Release / 网盘分发）
+data/raw/
+data/processed/
+datasets/
+
+# ---------- 嵌入式（ESP-IDF / PlatformIO） ----------
+build/
+sdkconfig.old
+dependencies.lock
+managed_components/
+.pio/
+.pioenvs/
+.piolibdeps/
+
+# ---------- 硬件（KiCad / 立创EDA） ----------
+*-backups/
+fp-info-cache
+*.kicad_prl
+*.kicad_sch-bak
+*.lck
