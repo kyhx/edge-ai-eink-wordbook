@@ -52,6 +52,7 @@ datasets/
 # ---------- 嵌入式（ESP-IDF / PlatformIO） ----------
 build/
 sdkconfig.old
+firmware/sdkconfig
 dependencies.lock
 managed_components/
 .pio/

@@ -4,9 +4,32 @@ ESP32-S3 上的全部运行代码：墨水屏驱动、按键输入、音频输�
 
 ## 工具链
 
-默认 **ESP-IDF v5.x**，构建命令 `idf.py build` / `idf.py flash monitor`。
+使用 **ESP-IDF v6.1**，构建命令 `idf.py build` / `idf.py flash monitor`。
 
 Arduino-ESP32 仅作备选：一旦改用，`CMakeLists.txt` 与组件划分需要相应调整，并在对应 Issue 中记录原因，避免两套构建方式混用。
+
+本机安装位置：`F:\esp\v6.1\esp-idf`，工具链在 `C:\Users\Administrator\.espressif`。
+
+## 快速开始
+
+```bat
+:: 1. 激活 IDF 环境（每个新终端都要执行一次）
+call F:\esp\v6.1\esp-idf\export.bat
+
+:: 2. 进入工程
+cd /d C:\Users\Administrator\Desktop\paper\firmware
+
+:: 3. 配置目标芯片（只需一次，会生成 sdkconfig）
+idf.py set-target esp32s3
+
+:: 4. 编译
+idf.py build
+
+:: 5. 烧录并看日志（串口见设备管理器，当前为 COM4）
+idf.py -p COM4 flash monitor
+```
+
+按键 `Ctrl+]` 退出 monitor。若中文日志出现乱码，在终端先执行 `chcp 65001` 并设置 `PYTHONUTF8=1`。
 
 ## 规划结构
 
@@ -60,4 +83,18 @@ firmware/
 
 ## 当前状态
 
-未开始。对应任务 [#1](https://github.com/kyhx/edge-ai-eink-wordbook/issues/1)（2026.11.07 – 11.14）：搭建 ESP-IDF 环境，调通墨水屏、按键、音频采集与播放。
+**工具链与烧录链路已打通（2026-11-07）**，对应 [#1](https://github.com/kyhx/edge-ai-eink-wordbook/issues/1)。自检程序 `main/main.c` 已烧录运行，实测输出：
+
+```
+boot.esp32s3: SPI Mode QIO / SPI Flash Size 16MB
+octal_psram: Found 8MB PSRAM device, Speed 80MHz
+cpu_start: cpu freq: 240000000 Hz
+selftest: 芯片 ESP32-S3, 2 核, 版本 v0.2
+selftest: Flash 16 MB / PSRAM 8192 KB
+selftest: 内部RAM 空闲 380 KB / 总 429 KB
+selftest: 按键 PREV=1 NEXT=1 OK=1 BACK=1
+```
+
+说明：N16R8 的 Octal PSRAM 被正确识别（8 MB @ 80 MHz，内存测试通过），Flash 16 MB，主频 240 MHz，按键 GPIO 内部上拉生效。
+
+尚未完成：墨水屏驱动、I2S 录音与播放。
