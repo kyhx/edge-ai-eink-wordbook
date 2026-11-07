@@ -8,7 +8,7 @@
 hardware/
 ├── schematic/          # 原理图（.kicad_sch 或立创EDA工程）
 ├── pcb/                # PCB 源文件、叠层与阻抗说明
-├── wiring/             # 接线表：引脚—外设对照（固件开发阶段先于原理图存在）
+├── wiring/             # 接线表：引脚—外设对照（已有 [pinmap.md](wiring/pinmap.md)）
 ├── bom/                # BOM 表、替代料、采购链接与单价
 ├── datasheets/         # 关键器件手册（墨水屏、功放、电源芯片）
 ├── enclosure/          # 外壳 3D 模型（step / stl）
