@@ -5,6 +5,8 @@
 [![repo](https://img.shields.io/badge/GitHub-edge--ai--eink--wordbook-181717?logo=github)](https://github.com/kyhx/edge-ai-eink-wordbook)
 ![status](https://img.shields.io/badge/status-开题阶段-blue)
 ![platform](https://img.shields.io/badge/MCU-ESP32--S3-informational)
+[![issues](https://img.shields.io/github/issues/kyhx/edge-ai-eink-wordbook)](https://github.com/kyhx/edge-ai-eink-wordbook/issues)
+[![release](https://img.shields.io/github/v/release/kyhx/edge-ai-eink-wordbook)](https://github.com/kyhx/edge-ai-eink-wordbook/releases)
 ![license](https://img.shields.io/badge/license-待定-lightgrey)
 
 ```bash
@@ -85,20 +87,24 @@ paper/
 
 ## 五、进度安排
 
+任务以 [Issues](https://github.com/kyhx/edge-ai-eink-wordbook/issues) 跟踪，按四个 [Milestone](https://github.com/kyhx/edge-ai-eink-wordbook/milestones) 归组；本表仅作总览。
+
 | 时间 | 阶段任务 | 状态 |
 |---|---|---|
-| 2026.10.15 – 11.07 | 文献调研、需求分析、器件选型、总体设计与开题报告 | ✅ 已完成 |
-| 2026.11.07 – 11.14 | 搭建开发环境，调通墨水屏、按键、音频采集与播放 | ⏳ 进行中 |
-| 2026.11.14 – 11.28 | 建立 ≥50 词条词库，采集并标注 ≥200 条跟读语音 | ☐ 待开始 |
-| 2026.11.28 – 12.18 | 提取梅尔频谱与基频特征，训练轻量分类器，规则法对照测试 | ☐ 待开始 |
-| 2026.12.18 – 2027.01.05 | 模型量化、单片机部署与本地推理，记录体积与耗时 | ☐ 待开始 |
-| 2027.01.05 – 01.18 | 单词卡界面、局部刷新、分级复习、无线同步与系统集成 | ☐ 待开始 |
-| 2027.01.18 – 01.24 | PCB 打样前测试与硬件方案修改 | ☐ 待开始 |
-| 2027.01.25 – 02.10 | PCB 设计、打样、组装、烧录与基础测试 | ☐ 待开始 |
-| 2027.02.10 – 02.28 | 两种算法对照实验，功耗与刷新耗时测试，撰写论文系统设计部分 | ☐ 待开始 |
-| 2027.03.01 – 03.10 | 论文初稿与可演示原型，中期检查 | ☐ 待开始 |
-| 2027.03.11 – 03.25 | 根据中期意见修改论文，完善实验与不足分析 | ☐ 待开始 |
-| 2027.03.26 – 04.10 | 论文定稿、查重、整理代码附件、准备答辩 | ☐ 待开始 |
+| 2026.10.15 – 11.07 | 文献调研、需求分析、器件选型、总体设计与开题报告 | ✅ 已完成（[v0.1-kaiti](https://github.com/kyhx/edge-ai-eink-wordbook/releases/tag/v0.1-kaiti)） |
+| 2026.11.07 – 11.14 | 搭建开发环境，调通墨水屏、按键、音频采集与播放 | ⏳ 进行中（[#1](https://github.com/kyhx/edge-ai-eink-wordbook/issues/1)） |
+| 2026.11.14 – 11.28 | 建立 ≥50 词条词库，采集并标注 ≥200 条跟读语音 | ☐ 待开始（[#2](https://github.com/kyhx/edge-ai-eink-wordbook/issues/2)） |
+| 2026.11.28 – 12.18 | 提取梅尔频谱与基频特征，训练轻量分类器，规则法对照测试 | ☐ 待开始（[#3](https://github.com/kyhx/edge-ai-eink-wordbook/issues/3)） |
+| 2026.12.18 – 2027.01.05 | 模型量化、单片机部署与本地推理，记录体积与耗时 | ☐ 待开始（[#4](https://github.com/kyhx/edge-ai-eink-wordbook/issues/4)） |
+| 2027.01.05 – 01.18 | 单词卡界面、局部刷新、分级复习、无线同步与系统集成 | ☐ 待开始（[#5](https://github.com/kyhx/edge-ai-eink-wordbook/issues/5)） |
+| 2027.01.18 – 01.24 | PCB 打样前测试与硬件方案修改 | ☐ 待开始（[#6](https://github.com/kyhx/edge-ai-eink-wordbook/issues/6)） |
+| 2027.01.25 – 02.10 | PCB 设计、打样、组装、烧录与基础测试 | ☐ 待开始（[#7](https://github.com/kyhx/edge-ai-eink-wordbook/issues/7)） |
+| 2027.02.10 – 02.28 | 两种算法对照实验，功耗与刷新耗时测试，撰写论文系统设计部分 | ☐ 待开始（[#8](https://github.com/kyhx/edge-ai-eink-wordbook/issues/8)） |
+| 2027.03.01 – 03.10 | 论文初稿与可演示原型，中期检查 | ☐ 待开始（[#9](https://github.com/kyhx/edge-ai-eink-wordbook/issues/9)） |
+| 2027.03.11 – 03.25 | 根据中期意见修改论文，完善实验与不足分析 | ☐ 待开始（[#10](https://github.com/kyhx/edge-ai-eink-wordbook/issues/10)） |
+| 2027.03.26 – 04.10 | 论文定稿、查重、整理代码附件、准备答辩 | ☐ 待开始（[#11](https://github.com/kyhx/edge-ai-eink-wordbook/issues/11)） |
+
+**Milestone 划分**：M1 基础平台与数据集（2026.11.28 止）· M2 算法与端侧部署（2027.01.05 止）· M3 系统集成与硬件（2027.02.10 止）· M4 实验、论文与答辩（2027.04.10 止）。
 
 ## 六、硬件与软件环境
 
