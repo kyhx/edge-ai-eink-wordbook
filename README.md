@@ -79,7 +79,7 @@ paper/
 | 目录 | 说明 |
 |---|---|
 | [docs](docs/README.md) | 论文正文、插图源文件、指导记录、开题/答辩 PPT、数据集说明 |
-| [firmware](firmware/README.md) | 主程序与组件（display / audio_in / audio_out / infer / review / net） |
+| [firmware](firmware/README.md) | 主程序与组件（display / input / audio_in / audio_out / infer / review / net），默认 ESP-IDF v5.x |
 | [ml](ml/README.md) | 特征提取、训练、量化、导出，以及作为对照的基频规则法 |
 | [hardware](hardware/README.md) | 原理图、PCB、BOM、器件手册、外壳与打样测试记录 |
 | [data](data/README.md) | `vocabulary.csv`、`labels.csv`、划分清单；`raw/` 与 `processed/` 不入库 |
