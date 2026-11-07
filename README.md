@@ -1,10 +1,15 @@
 # 基于边缘 AI 的墨水屏英语学习机
 
-> 本科毕业设计（论文）项目仓库
+> 本科毕业设计（论文）项目仓库　·　[github.com/kyhx/edge-ai-eink-wordbook](https://github.com/kyhx/edge-ai-eink-wordbook)
 
+[![repo](https://img.shields.io/badge/GitHub-edge--ai--eink--wordbook-181717?logo=github)](https://github.com/kyhx/edge-ai-eink-wordbook)
 ![status](https://img.shields.io/badge/status-开题阶段-blue)
 ![platform](https://img.shields.io/badge/MCU-ESP32--S3-informational)
 ![license](https://img.shields.io/badge/license-待定-lightgrey)
+
+```bash
+git clone https://github.com/kyhx/edge-ai-eink-wordbook.git
+```
 
 ## 一、项目简介
 
