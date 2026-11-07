@@ -21,10 +21,15 @@ firmware/
 │   ├── audio_out/       # 单词标准音播放
 │   ├── infer/           # 特征提取 + 量化模型推理
 │   ├── review/          # 词库与间隔重复调度
-│   └── net/             # Wi-Fi 配网与学习记录同步
+│   ├── net/             # Wi-Fi 配网与学习记录同步
+│   └── storage/         # Flash 词库音频分区与 NVS 读写（不含 SD 卡）
 ├── models/              # 由 ml/ 导出、供 infer 读取的模型文件（大文件慎入）
 └── CMakeLists.txt
 ```
+
+## 存储
+
+不使用 SD 卡。单词音频编译进独立的 Flash 分区（只读），学习记录与复习进度存 NVS。没有任何依赖可移动介质的代码路径，也不引入 FATFS。
 
 ## 音频参数（初步，随 #3 定稿）
 
