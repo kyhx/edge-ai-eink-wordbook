@@ -36,6 +36,9 @@ runs/
 logs/
 exports/
 
+# 参考文献原文（版权原因不入公开仓库，仅本地保留）
+docs/refs/*.pdf
+
 # 原始语音数据与数据集（体积大，按需通过 Release / 网盘分发）
 data/raw/
 data/processed/
