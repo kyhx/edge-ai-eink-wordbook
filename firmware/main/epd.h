@@ -27,5 +27,9 @@ uint32_t epd_display_full(void);
 /* 局部刷新：只更新 (x,y,w,h) 区域，快但会留残影 */
 uint32_t epd_display_partial(int x, int y, int w, int h);
 
+/* 自动模式：比较新旧帧，只刷变化区域；残影累积到阈值时自动转全刷。
+ * used_full 返回本次是否为全刷。 */
+uint32_t epd_display_auto(bool *used_full);
+
 /* 进入深度睡眠，电流降到 µA 级 */
 void epd_sleep(void);

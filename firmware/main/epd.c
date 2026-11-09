@@ -335,3 +335,56 @@ void epd_sleep(void)
     epd_cmd(CMD_DEEP_SLEEP);
     epd_data1(0x01);
 }
+
+/* ---------------------------------------------------------------- */
+/* 自动刷新：脏区检测 + 定期全刷清除残影                              */
+/* ---------------------------------------------------------------- */
+#define PARTIAL_LIMIT   20      /* 连续局部刷新次数上限 */
+#define FULL_AREA_RATIO 70      /* 变化面积超过 70% 就直接全刷 */
+
+uint32_t epd_display_auto(bool *used_full)
+{
+    static int partial_count = 0;
+    static bool base_ready = false;
+    if (used_full) *used_full = false;
+
+    /* 第一次必须全刷：局部刷新依赖控制器里的基准图 */
+    if (!base_ready) {
+        base_ready = true;
+        if (used_full) *used_full = true;
+        return epd_display_full();
+    }
+
+    int min_b = EPD_WIDTH / 8, max_b = -1;
+    int min_y = EPD_HEIGHT,   max_y = -1;
+
+    for (int y = 0; y < EPD_HEIGHT; y++) {
+        const uint8_t *cur = &s_fb[y * (EPD_WIDTH / 8)];
+        const uint8_t *old = &s_old[y * (EPD_WIDTH / 8)];
+        for (int b = 0; b < EPD_WIDTH / 8; b++) {
+            if (cur[b] != old[b]) {
+                if (b < min_b) min_b = b;
+                if (b > max_b) max_b = b;
+                if (y < min_y) min_y = y;
+                if (y > max_y) max_y = y;
+            }
+        }
+    }
+
+    if (max_b < 0) return 0;                 /* 无变化 */
+
+    int x0 = min_b * 8;
+    int x1 = max_b * 8 + 7;
+    int w  = x1 - x0 + 1;
+    int h  = max_y - min_y + 1;
+
+    int area_ratio = (w * h) * 100 / (EPD_WIDTH * EPD_HEIGHT);
+    if (partial_count >= PARTIAL_LIMIT || area_ratio > FULL_AREA_RATIO) {
+        partial_count = 0;
+        if (used_full) *used_full = true;
+        return epd_display_full();
+    }
+
+    partial_count++;
+    return epd_display_partial(x0, min_y, w, h);
+}

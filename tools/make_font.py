@@ -38,7 +38,8 @@ def collect_chars(rows):
         latin |= set(r["word"]) | set(r["example"]) | set(r["phonetic"])
     # 固定包含全部可打印 ASCII，避免界面上出现大写字母时缺字
     latin |= set(string.printable[:95])
-    latin = {c for c in latin if ord(c) < 0x250}
+    # 注意：IPA 扩展区在 U+0250~U+02AF（ʃ ʊ ʌ ʒ ˈ ː 等），不能按 0x250 截断
+    latin = {c for c in latin if ord(c) < 0x2000}
     cjk = set()
     for r in rows:
         cjk |= set(r["meaning"])

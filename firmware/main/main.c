@@ -59,10 +59,12 @@ static void draw_card(int idx)
 static void show(int idx)
 {
     draw_card(idx);
-    uint32_t ms = epd_display_full();
-    ESP_LOGI(TAG, "[%d/%d] %s %s %s | 全刷 %" PRIu32 " ms",
+    bool full = false;
+    uint32_t ms = epd_display_auto(&full);
+    ESP_LOGI(TAG, "[%d/%d] %s %s %s | %s %" PRIu32 " ms",
              idx + 1, g_vocab_count, g_vocab[idx].word,
-             g_vocab[idx].phonetic, g_vocab[idx].meaning, ms);
+             g_vocab[idx].phonetic, g_vocab[idx].meaning,
+             full ? "全刷" : "局部", ms);
 }
 
 static void init_gpio(void)
