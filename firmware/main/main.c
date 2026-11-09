@@ -1,80 +1,41 @@
 /*
- * 启动自检 + I2S 回环测试
+ * 主程序：墨水屏点亮测试
  *
- * 流程：开机打印芯片信息 → 自动录 3 秒 → 从功放回放；之后按 OK 键可重复
- *
- * 采样参数：
- *   麦克风 ICS-43434  I2S0 主机接收，32 bit 槽 / 单声道（左）
- *   功放   MAX98357   I2S1 主机发送，16 bit / 立体声
- *   采样率 16 kHz
+ * 开机后先画测试图并全刷，之后每 5 秒在正/反两张图之间切换，
+ * 同时打印全刷耗时；按 BACK 键触发一次音频回环测试。
  */
 #include <inttypes.h>
-#include <stdio.h>
-#include <string.h>
+#include <stdbool.h>
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
 #include "driver/gpio.h"
-#include "driver/i2s_std.h"
 #include "esp_chip_info.h"
 #include "esp_flash.h"
 #include "esp_heap_caps.h"
 #include "esp_log.h"
-#include "esp_mac.h"
 #include "esp_psram.h"
 #include "esp_system.h"
 
+#include "audio_test.h"
 #include "board_config.h"
+#include "epd.h"
 
-static const char *TAG = "selftest";
-
-#define SAMPLE_RATE      16000
-#define REC_SECONDS      3
-#define REC_SAMPLES      (SAMPLE_RATE * REC_SECONDS)
-#define REC_BYTES        (REC_SAMPLES * 4)        /* 32 bit 槽，单声道 */
-#define PLAY_BYTES       (REC_SAMPLES * 2 * 2)    /* 16 bit，立体声 */
-
-static i2s_chan_handle_t s_rx = NULL;
-static i2s_chan_handle_t s_tx = NULL;
-
-/* ---------------------------------------------------------------- */
-/* 芯片信息                                                          */
-/* ---------------------------------------------------------------- */
-static const char *chip_model_name(esp_chip_model_t model)
-{
-    switch (model) {
-    case CHIP_ESP32S3: return "ESP32-S3";
-    default:           return "unknown";
-    }
-}
+static const char *TAG = "main";
 
 static void print_info(void)
 {
     esp_chip_info_t chip;
     esp_chip_info(&chip);
-
-    ESP_LOGI(TAG, "================ 启动自检 ================");
-    ESP_LOGI(TAG, "芯片      : %s, %d 核, 版本 v%d.%d",
-             chip_model_name(chip.model), chip.cores,
-             chip.revision / 100, chip.revision % 100);
-
     uint32_t flash_size = 0;
-    if (esp_flash_get_size(NULL, &flash_size) == ESP_OK) {
-        ESP_LOGI(TAG, "Flash     : %" PRIu32 " MB", flash_size / (1024 * 1024));
-    }
+    esp_flash_get_size(NULL, &flash_size);
 
-    size_t psram = esp_psram_get_size();
-    ESP_LOGI(TAG, "PSRAM     : %u KB", (unsigned)(psram / 1024));
-    ESP_LOGI(TAG, "内部RAM   : 空闲 %u KB / 总 %u KB",
-             (unsigned)(heap_caps_get_free_size(MALLOC_CAP_INTERNAL) / 1024),
-             (unsigned)(heap_caps_get_total_size(MALLOC_CAP_INTERNAL) / 1024));
-    ESP_LOGI(TAG, "==========================================");
+    ESP_LOGI(TAG, "ESP32-S3 %d 核 v%d.%d | Flash %" PRIu32 " MB | PSRAM %u KB",
+             chip.cores, chip.revision / 100, chip.revision % 100,
+             flash_size / (1024 * 1024), (unsigned)(esp_psram_get_size() / 1024));
 }
 
-/* ---------------------------------------------------------------- */
-/* GPIO                                                              */
-/* ---------------------------------------------------------------- */
 static void init_gpio(void)
 {
     gpio_config_t out = {
@@ -82,8 +43,8 @@ static void init_gpio(void)
         .mode = GPIO_MODE_OUTPUT,
     };
     ESP_ERROR_CHECK(gpio_config(&out));
-    gpio_set_level(PIN_AMP_EN, 0);      /* 功放先关断，避免上电爆音 */
-    gpio_set_level(PIN_MIC_PWR_EN, 1);  /* 麦克风上电 */
+    gpio_set_level(PIN_AMP_EN, 0);
+    gpio_set_level(PIN_MIC_PWR_EN, 1);
 
     gpio_config_t in = {
         .pin_bit_mask = (1ULL << PIN_KEY_PREV) | (1ULL << PIN_KEY_NEXT) |
@@ -94,153 +55,90 @@ static void init_gpio(void)
     ESP_ERROR_CHECK(gpio_config(&in));
 }
 
-/* ---------------------------------------------------------------- */
-/* I2S                                                               */
-/* ---------------------------------------------------------------- */
-static void audio_init(void)
+/* 测试图：边框 + 实心块 + 棋盘 + 渐变竖条 + 对角线 */
+static void draw_test_card(bool inverse)
 {
-    /* --- 麦克风：I2S0 接收 --- */
-    i2s_chan_config_t rx_cc = I2S_CHANNEL_DEFAULT_CONFIG(I2S_NUM_0, I2S_ROLE_MASTER);
-    ESP_ERROR_CHECK(i2s_new_channel(&rx_cc, NULL, &s_rx));
+    uint8_t fg = inverse ? EPD_WHITE : EPD_BLACK;
+    uint8_t bg = inverse ? EPD_BLACK : EPD_WHITE;
 
-    i2s_std_config_t rx_cfg = {
-        .clk_cfg  = I2S_STD_CLK_DEFAULT_CONFIG(SAMPLE_RATE),
-        .slot_cfg = I2S_STD_PHILIPS_SLOT_DEFAULT_CONFIG(I2S_DATA_BIT_WIDTH_32BIT,
-                                                        I2S_SLOT_MODE_MONO),
-        .gpio_cfg = {
-            .mclk = I2S_GPIO_UNUSED,
-            .bclk = PIN_MIC_BCLK,
-            .ws   = PIN_MIC_WS,
-            .dout = I2S_GPIO_UNUSED,
-            .din  = PIN_MIC_DIN,
-            .invert_flags = { .mclk_inv = 0, .bclk_inv = 0, .ws_inv = 0 },
-        },
-    };
-    rx_cfg.slot_cfg.slot_mask = I2S_STD_SLOT_LEFT;   /* ICS-43434 的 LR 接地选左声道 */
-    ESP_ERROR_CHECK(i2s_channel_init_std_mode(s_rx, &rx_cfg));
-    ESP_ERROR_CHECK(i2s_channel_enable(s_rx));
+    epd_clear(bg);
 
-    /* --- 功放：I2S1 发送 --- */
-    i2s_chan_config_t tx_cc = I2S_CHANNEL_DEFAULT_CONFIG(I2S_NUM_1, I2S_ROLE_MASTER);
-    ESP_ERROR_CHECK(i2s_new_channel(&tx_cc, &s_tx, NULL));
+    /* 外边框 */
+    epd_hline(0, EPD_WIDTH - 1, 0, fg);
+    epd_hline(0, EPD_WIDTH - 1, 1, fg);
+    epd_hline(0, EPD_WIDTH - 1, EPD_HEIGHT - 1, fg);
+    epd_hline(0, EPD_WIDTH - 1, EPD_HEIGHT - 2, fg);
+    epd_vline(0, 0, EPD_HEIGHT - 1, fg);
+    epd_vline(1, 0, EPD_HEIGHT - 1, fg);
+    epd_vline(EPD_WIDTH - 1, 0, EPD_HEIGHT - 1, fg);
+    epd_vline(EPD_WIDTH - 2, 0, EPD_HEIGHT - 1, fg);
 
-    i2s_std_config_t tx_cfg = {
-        .clk_cfg  = I2S_STD_CLK_DEFAULT_CONFIG(SAMPLE_RATE),
-        .slot_cfg = I2S_STD_PHILIPS_SLOT_DEFAULT_CONFIG(I2S_DATA_BIT_WIDTH_16BIT,
-                                                        I2S_SLOT_MODE_STEREO),
-        .gpio_cfg = {
-            .mclk = I2S_GPIO_UNUSED,
-            .bclk = PIN_SPK_BCLK,
-            .ws   = PIN_SPK_WS,
-            .dout = PIN_SPK_DOUT,
-            .din  = I2S_GPIO_UNUSED,
-            .invert_flags = { .mclk_inv = 0, .bclk_inv = 0, .ws_inv = 0 },
-        },
-    };
-    ESP_ERROR_CHECK(i2s_channel_init_std_mode(s_tx, &tx_cfg));
-    ESP_ERROR_CHECK(i2s_channel_enable(s_tx));
+    /* 左上角实心块 */
+    epd_fill_rect(10, 12, 40, 40, fg);
 
-    ESP_LOGI(TAG, "I2S 初始化完成：MIC bclk=%d ws=%d din=%d | AMP bclk=%d ws=%d dout=%d",
-             PIN_MIC_BCLK, PIN_MIC_WS, PIN_MIC_DIN,
-             PIN_SPK_BCLK, PIN_SPK_WS, PIN_SPK_DOUT);
+    /* 右上角 8x8 棋盘，64x64 */
+    for (int y = 0; y < 8; y++) {
+        for (int x = 0; x < 8; x++) {
+            if ((x + y) & 1) {
+                epd_fill_rect(60 + x * 8, 12 + y * 8, 8, 8, fg);
+            }
+        }
+    }
+
+    /* 中部渐变竖条：宽度递增 */
+    for (int i = 0; i < 16; i++) {
+        epd_fill_rect(10 + i * 7, 90, i / 2 + 1, 60, fg);
+    }
+
+    /* 底部四条粗细不同的横线 */
+    epd_fill_rect(10, 170, 108, 2,  fg);
+    epd_fill_rect(10, 185, 108, 4,  fg);
+    epd_fill_rect(10, 200, 108, 8,  fg);
+    epd_fill_rect(10, 218, 108, 16, fg);
+
+    /* 对角线 */
+    for (int i = 0; i < EPD_WIDTH && (i * 2) < EPD_HEIGHT; i++) {
+        epd_set_pixel(i, i * 2, fg);
+        epd_set_pixel(EPD_WIDTH - 1 - i, i * 2, fg);
+    }
 }
 
-/* ---------------------------------------------------------------- */
-/* 回环测试                                                          */
-/* ---------------------------------------------------------------- */
-static void run_loopback(uint8_t *rec, int16_t *play)
-{
-    ESP_LOGI(TAG, "录音 %d 秒 ……", REC_SECONDS);
-
-    size_t got = 0;
-    while (got < REC_BYTES) {
-        size_t n = 0;
-        esp_err_t err = i2s_channel_read(s_rx, rec + got, REC_BYTES - got, &n, 1000);
-        if (err != ESP_OK) {
-            ESP_LOGE(TAG, "读取失败: %s", esp_err_to_name(err));
-            return;
-        }
-        got += n;
-    }
-
-    /* 32 bit 槽里高 24 位是有效数据，取高 16 位后做峰值归一化 */
-    int32_t *in = (int32_t *)rec;
-    int32_t peak = 0;
-    int64_t sum_abs = 0;
-    for (int i = 0; i < REC_SAMPLES; i++) {
-        int32_t v = in[i] >> 16;
-        int32_t a = v < 0 ? -v : v;
-        if (a > peak) peak = a;
-        sum_abs += a;
-    }
-    size_t mean_abs = (size_t)(sum_abs / REC_SAMPLES);
-
-    ESP_LOGI(TAG, "录音完成：峰值 %" PRId32 " (%.1f%% FS)，平均 |x| = %u",
-             peak, peak * 100.0f / 32768.0f, (unsigned)mean_abs);
-
-    if (peak < 100) {
-        ESP_LOGW(TAG, "信号几乎为零，请检查麦克风接线（SCK/WS/SD 与供电）");
-    }
-
-    int32_t gain_q8 = peak > 0 ? (int32_t)((30000LL << 8) / peak) : 256;
-    if (gain_q8 > 32 * 256) gain_q8 = 32 * 256;   /* 最多放大 32 倍 */
-
-    for (int i = 0; i < REC_SAMPLES; i++) {
-        int32_t v = (in[i] >> 16) * gain_q8 / 256;
-        if (v > 32767)  v = 32767;
-        if (v < -32768) v = -32768;
-        play[2 * i]     = (int16_t)v;
-        play[2 * i + 1] = (int16_t)v;
-    }
-
-    gpio_set_level(PIN_AMP_EN, 1);
-    vTaskDelay(pdMS_TO_TICKS(50));
-
-    ESP_LOGI(TAG, "回放中 ……");
-    size_t written = 0;
-    while (written < PLAY_BYTES) {
-        size_t w = 0;
-        esp_err_t err = i2s_channel_write(s_tx, (uint8_t *)play + written,
-                                          PLAY_BYTES - written, &w, 1000);
-        if (err != ESP_OK) {
-            ESP_LOGE(TAG, "写入失败: %s", esp_err_to_name(err));
-            break;
-        }
-        written += w;
-    }
-
-    vTaskDelay(pdMS_TO_TICKS(200));
-    gpio_set_level(PIN_AMP_EN, 0);
-    ESP_LOGI(TAG, "回放结束，按 OK 键可再测一次");
-}
-
-/* ---------------------------------------------------------------- */
-/* 主程序                                                            */
-/* ---------------------------------------------------------------- */
 void app_main(void)
 {
     print_info();
     init_gpio();
 
-    uint8_t *rec  = heap_caps_malloc(REC_BYTES,  MALLOC_CAP_SPIRAM);
-    int16_t *play = heap_caps_malloc(PLAY_BYTES, MALLOC_CAP_SPIRAM);
-    if (!rec || !play) {
-        ESP_LOGE(TAG, "内存分配失败：rec=%p play=%p", rec, play);
+    if (epd_init() != ESP_OK) {
+        ESP_LOGE(TAG, "墨水屏初始化失败");
         return;
     }
 
-    audio_init();
+    audio_test_init();
 
-    ESP_LOGI(TAG, "上电自动测试一次");
-    run_loopback(rec, play);
+    bool inverse = false;
+    draw_test_card(inverse);
+    uint32_t ms = epd_display();
+    ESP_LOGI(TAG, "首帧全刷完成，耗时 %" PRIu32 " ms", ms);
 
-    bool last_ok = true;
+    int64_t last_switch = xTaskGetTickCount();
+    bool last_back = true;
+
     while (true) {
-        bool ok = gpio_get_level(PIN_KEY_OK) == 0;   /* 按下为低 */
-        if (ok && !last_ok) {
-            run_loopback(rec, play);
+        bool back = gpio_get_level(PIN_KEY_BACK) == 0;
+        if (back && !last_back) {
+            ESP_LOGI(TAG, "触发音频回环测试");
+            audio_test_run_once();
         }
-        last_ok = ok;
+        last_back = back;
+
+        if ((xTaskGetTickCount() - last_switch) >= pdMS_TO_TICKS(5000)) {
+            last_switch = xTaskGetTickCount();
+            inverse = !inverse;
+            draw_test_card(inverse);
+            uint32_t cost = epd_display();
+            ESP_LOGI(TAG, "全刷 %s图，耗时 %" PRIu32 " ms", inverse ? "反" : "正", cost);
+        }
+
         vTaskDelay(pdMS_TO_TICKS(50));
     }
 }
