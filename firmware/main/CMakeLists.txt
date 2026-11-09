@@ -1,5 +1,6 @@
 idf_component_register(SRCS "main.c" "epd.c" "gfx.c" "audio_test.c"
-                            "fonts/font_word.c" "fonts/font_ipa.c"
+                            "fonts/font_word.c" "fonts/font_word_s.c"
+                            "fonts/font_ipa.c"
                             "fonts/font_small.c" "fonts/font_cjk.c"
                             "fonts/vocab_data.c"
                        INCLUDE_DIRS "." "fonts"

@@ -47,7 +47,12 @@ static void draw_card(int idx)
     gfx_clear(EPD_WHITE);
     draw_header(idx, g_vocab_count);
 
-    gfx_text(&font_word, 10, 56, v->word, EPD_BLACK);
+    /* 长单词自动降到 24px，避免超出右边界 */
+    const bitmap_font_t *wf = &font_word;
+    if (gfx_text_width(&font_word, v->word) > GFX_W - 20) {
+        wf = &font_word_s;
+    }
+    gfx_text(wf, 10, 56, v->word, EPD_BLACK);
     gfx_text(&font_ipa, 12, 78, v->phonetic, EPD_BLACK);
 
     gfx_hline(10, GFX_W - 10, 88, EPD_BLACK);

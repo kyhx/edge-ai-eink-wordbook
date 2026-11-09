@@ -23,6 +23,7 @@ typedef struct {
 } bitmap_font_t;
 
 extern const bitmap_font_t font_word;    /* Arial Bold 32，单词 */
+extern const bitmap_font_t font_word_s;  /* Arial Bold 24，长单词备用 */
 extern const bitmap_font_t font_ipa;     /* Arial 16，音标 */
 extern const bitmap_font_t font_small;   /* Arial 12，例句 */
 extern const bitmap_font_t font_cjk;     /* 微软雅黑 16，释义 */

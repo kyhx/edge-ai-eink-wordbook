@@ -146,6 +146,7 @@ typedef struct {
 } bitmap_font_t;
 
 extern const bitmap_font_t font_word;    /* Arial Bold 32，单词 */
+extern const bitmap_font_t font_word_s;  /* Arial Bold 24，长单词备用 */
 extern const bitmap_font_t font_ipa;     /* Arial 16，音标 */
 extern const bitmap_font_t font_small;   /* Arial 12，例句 */
 extern const bitmap_font_t font_cjk;     /* 微软雅黑 16，释义 */
@@ -199,6 +200,7 @@ def main():
 
     jobs = [
         ("font_word.c", "font_word", FONT_WORD, 32, latin),
+        ("font_word_s.c", "font_word_s", FONT_WORD, 24, latin),
         ("font_ipa.c", "font_ipa", FONT_LATIN, 16, latin),
         ("font_small.c", "font_small", FONT_LATIN, 12, latin),
         ("font_cjk.c", "font_cjk", FONT_CJK, 16, cjk),

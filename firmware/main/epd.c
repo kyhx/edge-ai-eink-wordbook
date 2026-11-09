@@ -339,8 +339,9 @@ void epd_sleep(void)
 /* ---------------------------------------------------------------- */
 /* 自动刷新：脏区检测 + 定期全刷清除残影                              */
 /* ---------------------------------------------------------------- */
-#define PARTIAL_LIMIT   20      /* 连续局部刷新次数上限 */
+#define PARTIAL_LIMIT   5       /* 连续局部刷新次数上限：残影明显时降到 5 */
 #define FULL_AREA_RATIO 70      /* 变化面积超过 70% 就直接全刷 */
+#define DIRTY_PAD       3       /* 脏区外扩像素，避免边缘残影 */
 
 uint32_t epd_display_auto(bool *used_full)
 {
@@ -373,10 +374,17 @@ uint32_t epd_display_auto(bool *used_full)
 
     if (max_b < 0) return 0;                 /* 无变化 */
 
-    int x0 = min_b * 8;
-    int x1 = max_b * 8 + 7;
+    int x0 = min_b * 8 - DIRTY_PAD;
+    int x1 = max_b * 8 + 7 + DIRTY_PAD;
+    int y0 = min_y - DIRTY_PAD;
+    int y1 = max_y + DIRTY_PAD;
+    if (x0 < 0) x0 = 0;
+    if (y0 < 0) y0 = 0;
+    if (x1 > EPD_WIDTH - 1)  x1 = EPD_WIDTH - 1;
+    if (y1 > EPD_HEIGHT - 1) y1 = EPD_HEIGHT - 1;
+
     int w  = x1 - x0 + 1;
-    int h  = max_y - min_y + 1;
+    int h  = y1 - y0 + 1;
 
     int area_ratio = (w * h) * 100 / (EPD_WIDTH * EPD_HEIGHT);
     if (partial_count >= PARTIAL_LIMIT || area_ratio > FULL_AREA_RATIO) {
@@ -386,5 +394,5 @@ uint32_t epd_display_auto(bool *used_full)
     }
 
     partial_count++;
-    return epd_display_partial(x0, min_y, w, h);
+    return epd_display_partial(x0, y0, w, h);
 }
