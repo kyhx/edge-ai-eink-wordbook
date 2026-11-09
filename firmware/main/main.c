@@ -34,7 +34,10 @@ static void draw_header(int idx, int total)
     snprintf(buf, sizeof(buf), "%d / %d", idx + 1, total);
     gfx_text(&font_small, 6, 12, buf, EPD_WHITE);
 
-    gfx_text(&font_small, GFX_W - 70, 12, "EINK TUTOR", EPD_WHITE);
+    /* 右对齐，避免文字超出画布被裁掉 */
+    const char *brand = "EINK TUTOR";
+    int w = gfx_text_width(&font_small, brand);
+    gfx_text(&font_small, GFX_W - w - 6, 12, brand, EPD_WHITE);
 }
 
 static void draw_card(int idx)

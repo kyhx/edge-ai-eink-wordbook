@@ -32,11 +32,12 @@ def load_rows():
 
 
 def collect_chars(rows):
+    import string
     latin = set()
     for r in rows:
         latin |= set(r["word"]) | set(r["example"]) | set(r["phonetic"])
-    # 补上界面常用字符
-    latin |= set("0123456789 /:%-.!?,'\"")
+    # 固定包含全部可打印 ASCII，避免界面上出现大写字母时缺字
+    latin |= set(string.printable[:95])
     latin = {c for c in latin if ord(c) < 0x250}
     cjk = set()
     for r in rows:
