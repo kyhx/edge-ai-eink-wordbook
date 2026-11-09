@@ -21,8 +21,11 @@ void epd_fill_rect(int x, int y, int w, int h, uint8_t color);
 void epd_hline(int x0, int x1, int y, uint8_t color);
 void epd_vline(int x, int y0, int y1, uint8_t color);
 
-/* 把帧缓存推给屏幕并等待刷新完成，返回耗时（毫秒） */
-uint32_t epd_display(void);
+/* 全刷：同时写入新旧两块 RAM，波形干净但慢（约 2 s） */
+uint32_t epd_display_full(void);
+
+/* 局部刷新：只更新 (x,y,w,h) 区域，快但会留残影 */
+uint32_t epd_display_partial(int x, int y, int w, int h);
 
 /* 进入深度睡眠，电流降到 µA 级 */
 void epd_sleep(void);
